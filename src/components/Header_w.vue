@@ -1,24 +1,36 @@
 <template>
   <header :class="[{ scrolled: isScrolled }, { dark: isDark }]">
     <div class="inner">
-      <img src="/public/images/link.png" alt="링크 로고" class="logo" @click="goHome" />
-      <div class="hamburger">
+      <img :src="currentLogo" alt="링크 로고" class="logo" @click="goHome" />
+      <div class="hamburger" @click="toggleSubMenu">
         <div class="line" v-for="n in 3" :key="n"></div>
       </div>
     </div>
+    <!-- 서브메뉴 -->
+    <Submenu v-if="isSubMenuOpen" @close="isSubMenuOpen = false"/>
   </header>
 </template>
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import Submenu from "./Submenu.vue";
 // 스크롤 상태 저장
 const isScrolled = ref(false);
+// 햄버거 클릭시 서브메뉴 나타내기
+const toggleSubMenu = ()=>{
+  isSubMenuOpen.value = !isSubMenuOpen.value
+}
+// 서브메뉴 선택 저장
+const isSubMenuOpen = ref(false)
 // 스크롤 색상 변경
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50; //50px이상 스크롤 하면 true로 변경 (색상 변경)
 };
-// 로고 클릭 시 홈 페이지로 이동하기
+
 const router = useRouter();
+const route = useRoute();
+
+// 로고 클릭 시 홈 페이지로 이동하기
 const goHome = () => {
   router.push("/");
 };
@@ -27,9 +39,26 @@ onMounted(() => {
   window.addEventListener("scroll", handleScroll);
 });
 // 부모 (App.vue)에서 받은 값
-const props = defineProps(
-    {isDark: Boolean,}
-)
+const props = defineProps({
+  isDark: Boolean,
+  logoSrc: {
+    tyle: String,
+    default: "/images/link.png",
+  },
+});
+// 현재 표시할 로고 이미지 계산
+const currentLogo = computed(() => {
+  // 스크롤 상태 우선
+  if (isScrolled.value) {
+    return "/images/favicon_192.png";
+  }
+  // 페이지 변경될 때
+  if (["Reser", "Review", "Resercheck"].includes(route.name)) {
+    return "/images/favicon_192.png";
+  }
+  // 기본 로고
+  return props.logoSrc;
+});
 </script>
 
 <style lang="scss" scoped>
@@ -49,20 +78,20 @@ header {
     .line {
       background-color: #fff !important;
     }
-    img {
-      filter: brightness(0) invert(1);
-    }
+    // img {
+    //   filter: brightness(0) invert(1);
+    // }
   }
-//   isDark dark가 더해지면
-&.dark{
+  //   isDark dark가 더해지면
+  &.dark {
     background-color: #333;
-    .line{
-        background-color: #fff !important;
+    .line {
+      background-color: #fff !important;
     }
-    img{
-        filter: brightness(0) invert(1);
-    }
-}
+    // img{
+    //     filter: brightness(0) invert(1);
+    // }
+  }
   .inner {
     max-width: 1280px;
     display: flex;
@@ -71,6 +100,7 @@ header {
     align-items: center;
     .logo {
       cursor: pointer;
+      width: 50px;
     }
     .hamburger {
       .line {
